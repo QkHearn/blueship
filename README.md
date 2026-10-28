@@ -1,8 +1,10 @@
 # blueship
 
-蓝区文档 **多线合入** 工具：Cursor Skill + 本地 CLI。
+蓝区文档 **多线合入**：以 **Cursor Skill 主编排**（`git` + GitCode API），CLI 仅为可选加速。
 
-把一次文档改动同步到多条合入线 → 推到 **fork** → 在主仓建空白 Issue →（你人工建 MR 后）评论 `start build`。
+完整链路：
+
+**staged → 多线推 fork → 按仓内模版建 PR（关联 Issue）→ 评论 `start build`**
 
 支持的主仓（白名单）：
 
@@ -11,13 +13,15 @@
 - `openharmony/interface_sdk_c`
 - `HarmonyOS_Samples/guide-snippets`
 
+流程细节见 [`SKILL.md`](./SKILL.md)。
+
 ---
 
 ## 依赖
 
-- `git`
-- 当前仓库已配置 **主仓 remote**（白名单内）+ **fork remote**（你自己的同名仓）
-- 建 Issue / 评门禁需要 GitCode Token：
+- `git` + Cursor（装好本 Skill）
+- 双 remote：白名单 **upstream** + 自己的 **fork**
+- GitCode Token（Issue / PR / start build）：
   ```bash
   git config --global gitcode.token <YOUR_TOKEN>
   # 或
@@ -26,82 +30,41 @@
 
 ---
 
-## 安装 CLI
-
-### 方式 A：直接用预编译产物（推荐）
-
-仓库已带好多平台二进制（`cli/dist/`）：
-
-| 文件 | 平台 |
-|------|------|
-| `blueship-darwin-arm64` | macOS Apple Silicon |
-| `blueship-darwin-amd64` | macOS Intel |
-| `blueship-windows-amd64.exe` | Windows x64 |
-| `blueship-linux-amd64` / `arm64` | Linux |
+## 推荐用法（Skill）
 
 ```bash
+# 1. 安装 Skill（一次）
 git clone git@github.com:QkHearn/blueship.git
-# macOS arm64 示例
-chmod +x blueship/cli/dist/blueship-darwin-arm64
-sudo cp blueship/cli/dist/blueship-darwin-arm64 /usr/local/bin/blueship
-blueship version
+ln -s "$(pwd)/blueship" ~/.cursor/skills/blueship
+
+# 2. 目标仓准备（一次）：双 remote + 可选 .blueship.json
+# 3. 改文档并 stage
+git add path/to/doc.md
+
+# 4. 在 Cursor 对话里说：
+#    1028 blueship
+# Agent 会：推断 ship/amend → 多线推 fork → 问变更来源/跟踪号
+#          → 填 PR 模版建 PR → Fixes #Issue → start build
 ```
 
-### 方式 B：本机编译
-
-需要 [Go](https://go.dev/dl/) 1.22+。
-
-```bash
-cd blueship/cli
-chmod +x build.sh
-./build.sh
-```
-
-### 方式 C：Cursor Skill
-
-将本仓库放到 Cursor 个人 skills，或软链：
-
-```bash
-ln -s /path/to/blueship ~/.cursor/skills/blueship
-```
-
-Skill 说明见根目录 [`SKILL.md`](./SKILL.md)。Agent 会优先调用 `blueship` CLI。
+触发词：`blueship` / `1028 blueship` / `通顺` / `start build` / `amend`。
 
 ---
 
-## 快速开始
+## 可选：CLI
 
-在目标 git 仓库根目录：
-
-```bash
-# 1. 配置本仓（问一次）：选 upstream / fork、合入线
-blueship init
-
-# 2. 改文档并 git add（staged）
-git add path/to/doc.md
-
-# 3. （可选）让 Agent 按 Skill 做通顺性 review；确认后再改
-
-# 4. 多线推送 + 建 Issue
-blueship ship --series 1028 --lines master,sta,70
-
-# 含周线时：
-blueship ship --series 1028 --lines master,sta,70,weekly --weekly-date 20261012
-
-# 5. 你在 GitCode 上从 fork 分支向主仓建 MR
-
-# 6. 触发门禁
-blueship gate --series 1028
-# 或
-blueship gate --mr 168397,168398
-```
-
-查看状态与建议：
+预编译在 `cli/dist/`（多平台）。适合本机脚本；**建 PR / 填模版以 Skill 为准**。
 
 ```bash
-blueship status
+chmod +x cli/dist/blueship-darwin-arm64
+sudo cp cli/dist/blueship-darwin-arm64 /usr/local/bin/blueship
 blueship status --json
+# 仅推 fork + Issue（不含按模版建 PR）：
+blueship ship --series 1028 --lines master,sta,70
+blueship gate --series 1028
 ```
+
+本机编译：`cd cli && ./build.sh`。
 
 ---
 
