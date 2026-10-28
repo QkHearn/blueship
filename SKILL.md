@@ -56,13 +56,29 @@ blueship init
 
 写入：`upstream` / `fork` remote 名、`lines` 映射、是否默认建 Issue。缺双 remote 或主仓不在白名单 → **停**，提示如何 `git remote add`，不要静默添加除非用户明确要求。
 
-## 每次必问
+## 提问策略（能推断就别问）
 
-1. 新开 `ship` 还是 `amend`（或只要 `gate` / `review`）
-2. 改动来源（默认 staged）
-3. 上哪几条线（多选；可推荐配置里的 lines；含 weekly 再问日期）
+先跑 `blueship status --json`，看 `recommended_mode` / `last_series` / `series_branches`。
 
-Issue / start build：跟项目默认；用户说「先别」再关。
+| 项 | 默认 | 何时才问 |
+|----|------|----------|
+| **ship vs amend** | **自动判断，不问** | 多 series 并存且用户没点名；或 status 与用户说法冲突 |
+| 只要 gate / review | 用户说「start build / 通顺」即走对应流程 | — |
+| 改动来源 | staged | 用户明确说看某路径 / unstaged |
+| 上哪几条线 | 配置里的 lines；amend 用 `last_lines` | 用户未说过且要新开 ship |
+| weekly 日期 | — | 线里含 weekly |
+| Issue / start build | 跟项目默认 | 用户说「先别」再关 |
+
+**ship / amend 推断规则（Agent 必须遵守）：**
+
+1. 用户只说通顺 / review → `review`（不 ship）
+2. 用户只要门禁 / start build → `gate`（不 ship）
+3. 有 staged，且本仓已有该 series 的 `{series}_*`（或 `.blueship-last-ship.json`）→ **`--amend`**
+4. 有 staged，无对应 series 分支 → **新开 `ship`**
+5. 用户口头指定「新开 / 重开 / amend / 补一刀」→ 以用户为准
+6. 仅当 3/4 仍分不清（例如多个 last series、分支残缺）→ 再问一句
+
+推断后在执行前提一句即可：「按上次 series `1024` 走 amend」，不必征询确认，除非用户上次说过先别推。
 
 ## 流程
 
