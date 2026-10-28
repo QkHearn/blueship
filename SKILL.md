@@ -1,14 +1,15 @@
 ---
 name: blueship
 description: >-
-  蓝区文档多线合入助手：按指令改文档、提交前通顺性建议（确认后才改）、多线建分支推 fork、
-  主仓建空白 Issue、对已有 MR 评论 start build。Triggers on: blueship, /blueship,
-  多线推送, 推 fork, 空白 Issue, start build（文档合入）, 文档多线.
+  蓝区文档多线合入助手：改文档、通顺建议、多线推 fork、空白 Issue、start build。
+  Triggers on: blueship, /blueship, 「MMDD blueship」(如 1028 blueship),
+  多线推送, 推 fork, 通顺, start build, gate, amend, 文档多线合入.
 ---
 
 # blueship
 
-Skill 负责问答与确认；**可执行动作优先调用 CLI** `blueship`（见 `cli/`），禁止在能调 CLI 时手写一长串等价 git/curl。
+Skill 负责问答与确认；**可执行动作只调 CLI 二进制**，禁止手写等价 git/curl。
+**运行合入时不要读 `cli/*.go` 源码**（改工具本身除外）；配置看 `.blueship.json` + `status --json`。
 
 ## 职责
 
@@ -97,7 +98,9 @@ blueship ship --series <MMDD或名> --lines master,sta,70 [--weekly-date YYYYMMD
 
 CLI 会：fetch 基线 → 建 `{series}_{line}` → 应用 staged 变更 → commit → push fork →（可选）主仓建空白 Issue。
 
-Agent 输出表格：线 / 分支 / sha / issue。提醒用户人工建 MR。
+stderr 会打印 `hearn/1028_master` 与浏览器 URL；JSON 含 `remote_ref` / `remote_url`。
+
+Agent **必须**输出表格：线 / **远端**（`fork/branch`）/ URL / sha / issue。提醒用户人工建 MR。勿只写本地分支名。
 
 ### amend
 
@@ -129,4 +132,4 @@ blueship gate --mr 168397,168398
 
 ## 状态驱动建议
 
-优先：`blueship status --json`，按返回的 `state` / `suggestion` 提示用户下一步，不要假设上一轮对话进度。
+优先：`blueship status --json`，按 `recommended_mode` / `state` / `suggestion` 行动；不要假设上一轮对话进度；不要为 ship/amend 重复提问。

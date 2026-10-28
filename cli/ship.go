@@ -10,16 +10,20 @@ import (
 )
 
 type ShipReplica struct {
-	Line    string `json:"line"`
-	Branch  string `json:"branch"`
-	SHA     string `json:"sha"`
-	Issue   string `json:"issue,omitempty"`
-	Pushed  bool   `json:"pushed"`
-	Message string `json:"message,omitempty"`
+	Line      string `json:"line"`
+	Branch    string `json:"branch"`
+	RemoteRef string `json:"remote_ref,omitempty"` // e.g. hearn/1028_master
+	RemoteURL string `json:"remote_url,omitempty"` // browser URL on fork
+	SHA       string `json:"sha"`
+	Issue     string `json:"issue,omitempty"`
+	Pushed    bool   `json:"pushed"`
+	Message   string `json:"message,omitempty"`
 }
 
 type ShipOut struct {
 	Series   string        `json:"series"`
+	Fork     string        `json:"fork,omitempty"`
+	Mode     string        `json:"mode"` // ship | amend
 	Replicas []ShipReplica `json:"replicas"`
 }
 
@@ -73,13 +77,18 @@ func cmdShip(args []string) error {
 	}
 
 	orig, _ := currentBranch()
-	out := ShipOut{Series: series}
+	mode := "ship"
+	if amend {
+		mode = "amend"
+	}
+	out := ShipOut{Series: series, Fork: c.Fork, Mode: mode}
 
 	parts := strings.Split(c.UpstreamRepo, "/")
 	if len(parts) != 2 {
 		return &ExitError{Code: 2, Message: "bad upstream_repo in config"}
 	}
 	owner, repo := parts[0], parts[1]
+	forkBrowse := forkBrowseBase(c.Fork)
 
 	for _, line := range lines {
 		rep := ShipReplica{Line: line, Branch: branchName(series, line)}
@@ -158,6 +167,10 @@ func cmdShip(args []string) error {
 			continue
 		}
 		rep.Pushed = true
+		rep.RemoteRef = c.Fork + "/" + rep.Branch
+		if forkBrowse != "" {
+			rep.RemoteURL = strings.TrimRight(forkBrowse, "/") + "/tree/" + rep.Branch
+		}
 
 		if createIssue && !amend {
 			title := fmt.Sprintf("%s [%s / %s]", msg, baseRef, rep.Branch)
@@ -181,7 +194,43 @@ func cmdShip(args []string) error {
 	if b, err := json.MarshalIndent(out, "", "  "); err == nil {
 		_ = os.WriteFile(filepath.Join(mustGitTop(), ".blueship-last-ship.json"), append(b, '\n'), 0644)
 	}
+	// human-readable remote refs (always print so Agent/user see fork branches)
+	fmt.Fprintf(os.Stderr, "\n[blueship] %s series=%s → fork remote %q\n", out.Mode, out.Series, out.Fork)
+	for _, r := range out.Replicas {
+		if r.Pushed {
+			fmt.Fprintf(os.Stderr, "  pushed  %s  %s\n", r.RemoteRef, shortSHA(r.SHA))
+			if r.RemoteURL != "" {
+				fmt.Fprintf(os.Stderr, "          %s\n", r.RemoteURL)
+			}
+		} else {
+			fmt.Fprintf(os.Stderr, "  failed  %s  %s\n", r.Branch, r.Message)
+		}
+		if r.Issue != "" {
+			fmt.Fprintf(os.Stderr, "          issue %s\n", r.Issue)
+		}
+	}
+	fmt.Fprintln(os.Stderr)
 	return printJSON(out)
+}
+
+func shortSHA(sha string) string {
+	if len(sha) > 12 {
+		return sha[:12]
+	}
+	return sha
+}
+
+// forkBrowseBase returns https://gitcode.com/<owner>/<repo> for the fork remote.
+func forkBrowseBase(forkRemote string) string {
+	out, err := runGit("remote", "get-url", forkRemote)
+	if err != nil {
+		return ""
+	}
+	o, r, ok := parseOwnerRepo(out)
+	if !ok {
+		return ""
+	}
+	return fmt.Sprintf("https://gitcode.com/%s/%s", o, r)
 }
 
 func splitCSV(s string) []string {
