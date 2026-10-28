@@ -1,0 +1,19 @@
+README.md
+  s_f1e033829d63e6::t_0262324b974368 3,7,9-80,87,96-101,105,109-110,113-114,118-121,124-163,169,184-188,191,195,197,199-203
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "5.30.7",
+  "base_commit_sha": "9a80a3f43021c4e8bc7d57038615cf2472908692",
+  "prompts": {},
+  "sessions": {
+    "s_f1e033829d63e6": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "82873f41-e9fa-4edb-96b0-94fbfb9bdc4b",
+        "model": "default"
+      },
+      "human_author": "Hearn <liuqiankun11@huawei.com>"
+    }
+  }
+}
