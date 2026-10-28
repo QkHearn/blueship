@@ -1,0 +1,32 @@
+.gitignore
+  s_b68a675767e6cd::t_c38bcc09a1e671 4-5
+README.md
+  s_b68a675767e6cd::t_815cfc89b99aa3 31,33,43,45-57,60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "5.30.7",
+  "base_commit_sha": "4515e6a0e0cb8f8d053683e895baa540ed5c25c9",
+  "prompts": {},
+  "humans": {
+    "h_5a953564e698df": {
+      "author": "Hearn <liuqiankun11@huawei.com>"
+    }
+  },
+  "sessions": {
+    "s_b68a675767e6cd": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "80f544c2-8357-4ef6-bd28-57d47e03114f",
+        "model": "default"
+      },
+      "human_author": "Hearn <liuqiankun11@huawei.com>",
+      "custom_attributes": {
+        "stats_model_totals": "{\"default\":{\"additions\":19,\"deletions\":19}}",
+        "stats_total_additions": "19",
+        "stats_total_deletions": "19",
+        "stats_turn_models": "{\"t_815cfc89b99aa3\":\"default\",\"t_c38bcc09a1e671\":\"default\"}"
+      }
+    }
+  }
+}
