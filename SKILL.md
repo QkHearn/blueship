@@ -16,22 +16,24 @@ description: >-
 ```text
 staged diff
     ↓
-① 探测 & 推断（series / ship|amend / lines）
+① 探测（series / ship|amend 推断、列出可选合入线）
     ↓
-② 只问缺口（变更来源+跟踪号；weekly 日期；用户说「先别」则停 PR/gate）
+② 【确认门闸 A】展示并让用户选择/确认：要推哪些线（及 weekly 日期）
+       未确认 → 禁止 push / 建 Issue / 建 PR
     ↓
-③ 多线：fetch 基线 → 建/切分支 → 打 patch → commit -s → push fork
+③ 多线：fetch → 分支 → patch → commit -s → push fork
     ↓
 ④ 每条线：建空白 Issue
     ↓
-⑤ 读 PR 模版 → 填好 body → POST 建 PR（Fixes #Issue）
+⑤ 【确认门闸 B】PR 模版问卷：活跃分支 Y/N + 变更来源类型 + 跟踪号
+       未齐 → 禁止建 PR / start build
     ↓
-⑥ 每条 PR 评论：start build
+⑥ 按模版填 body → POST 建 PR（Fixes #Issue）→ 评论 start build
     ↓
 ⑦ 输出总表（远端分支 / Issue / PR / gate）
 ```
 
-用户说「通顺」只做 review；说「start build / gate」且 PR 已在则只做 ⑥。
+用户说「通顺」只做 review；说「start build / gate」且 PR 已在则只做评论。
 
 ---
 
@@ -77,18 +79,62 @@ API 基址：`https://gitcode.com/api/v5`，头：`PRIVATE-TOKEN: <token>`。
 
 ---
 
-## 提问策略（能推断就别问）
+## 提问策略
 
-| 项 | 默认 | 才问 |
-|----|------|------|
-| ship vs amend | 有 `{series}_*` 或 last-ship → amend；否则 ship | 多 series 且用户没点名 |
-| series | 用户「1028 blueship」 | 完全没给 |
-| lines | 配置里非 weekly 键；默认 `master,sta,70` | 用户要改集合 |
-| weekly 日期 | — | 线含 weekly |
-| **变更来源 + 跟踪号** | — | **建 PR 前必问一次**（除非本轮已说清） |
-| Issue / PR / start build | 配置默认全开 | 用户说「先别 / 先不建 PR / 先别 start build」 |
+| 项 | 可否静默 | 规则 |
+|----|----------|------|
+| ship vs amend | 可推断 | 有 `{series}_*` / last-ship → amend；否则 ship；冲突再问 |
+| series | 用户已写则用 | 「1029 ship」→ 1029；没有则问 |
+| **要推哪些线** | **不可静默** | **门闸 A：必须展示并等用户确认**（见下） |
+| weekly 日期 | — | 用户勾了 weekly 才问 |
+| **活跃分支 Y/N（模版）** | **不可静默** | **门闸 B：明确勾选**；可默认=门闸 A 已选线为 Y，但须展示给用户改 |
+| **变更来源类型** | **不可静默** | **门闸 B：四选一**，禁止猜 |
+| **跟踪号** | **不可静默** | **门闸 B：纯数字**，禁止编造 |
+| Issue / PR / start build | 默认开 | 用户说「先别…」则跳过对应步 |
 
-变更来源（模版要求唯一）：`新增需求` | `变更需求` | `问题修复` | `主动优化` + **纯数字**跟踪号。
+### 门闸 A — 推送前（强制）
+
+探测后**先发确认块，等用户回复再 push**。推荐格式：
+
+```text
+准备 series=1029，模式=ship（新开）
+staged：<文件列表摘要>
+fork remote：hearn
+
+请选择要推的合入线（可多选，回复如：master,sta,70）：
+- [ ] master → 分支 1029_master ← origin/master
+- [ ] sta → 1029_sta ← origin/OpenHarmony_feature_sta_20260331
+- [ ] 70 → 1029_70 ← origin/OpenHarmony-7.0-Release
+- [ ] weekly → 1029_701 ← origin/weekly_YYYYMMDD（需补日期）
+
+建议（来自配置，仅供参考，不能当已确认）：master,sta,70
+```
+
+用户也可以说「就建议的三条」/「全要除了 weekly」——必须有一句明确选择。  
+**未确认线集合 → 禁止 fetch/push/建 Issue。**
+
+### 门闸 B — 建 PR 前（强制）
+
+push + Issue 完成后，再发模版问卷（可与门闸 A 合并成一次，若用户开场已答齐则可跳过对应项）：
+
+```text
+PR 模版确认（docs）：
+
+1) 活跃分支同步（Y/N，可改）：
+   - master: Y/N
+   - sta (OpenHarmony_feature_sta_20260331): Y/N
+   - weekly_YYYYMMDD: Y/N
+   - OpenHarmony-7.0-Release: Y/N
+   （默认：门闸 A 已推的线=Y，未推=N；仍须用户确认或改口）
+
+2) 文档变更来源（四选一，原因需唯一）：
+   - 新增需求 / 变更需求 / 问题修复 / 主动优化
+   - 跟踪编号（纯数字，不带前缀）：？
+
+3) 是否继续：建 PR + start build？（默认是；说「先别」则停）
+```
+
+**类型或跟踪号缺失 → 禁止 POST PR / start build。** 禁止用「fix bug」或空 body 凑合建 PR。
 
 ---
 
@@ -99,15 +145,18 @@ git remote -v
 git diff --cached --stat
 git branch --list "${SERIES}_*"
 test -f .blueship.json && cat .blueship.json
-# 可选：blueship status --json
 ```
 
 无 staged → 停，请用户 `git add`。  
-staged 若几乎为空（例如只多空行）→ **先警告**，用户确认再继续。
+staged 几乎为空（如只多空行）→ **警告**，用户确认再进门闸 A。
+
+探测结束后立刻出门闸 A，**不要**直接推。
 
 ---
 
 ## ② 多线推 fork（核心机械步骤）
+
+**仅在门闸 A 通过后执行。** 只处理用户确认的线。
 
 设：`UP`=upstream remote，`FK`=fork remote，`SERIES`，每条 `LINE` → `BASE`（来自配置），本地/远端分支名：
 
@@ -149,15 +198,17 @@ curl -sS -X POST "https://gitcode.com/api/v5/repos/${OWNER}/${REPO}/issues" \
 
 ## ④ 按模版建 PR
 
+**仅在门闸 B 通过后执行。** 活跃分支 Y/N、变更来源类型、跟踪号一律用用户确认值，禁止自行默认成「全 Y」或臆造类型。
+
 1. 读仓内模版（优先）：
 
    - `.gitcode/PULL_REQUEST_TEMPLATE.zh-CN.md`
    - 其次 `.gitcode/PULL_REQUEST_TEMPLATE.md` / `.gitee/...` / `.github/...`
 
-2. **Agent 填模版**（不要交空 body——API **不会**自动套模版）：
+2. **按门闸 B 答案填模版**（不要交空 body——API **不会**自动套模版）：
 
-   - 活跃分支：本次 `lines` 涉及的勾 **Y**，其余 **N**（weekly 写清具体 `weekly_YYYYMMDD`）
-   - 文档变更来源：只填用户选定的那一类 + 跟踪号
+   - 活跃分支：按用户 Y/N 填写（weekly 写清具体日期分支名）
+   - 文档变更来源：只填用户选中的那一类 + 跟踪号
    - 自检 / 示例代码：按改动事实勾；无示例可写「不涉及」
    - 文末加：`Fixes #<issue_number>`（有 Issue 时；关联必须写在 **PR body**，评论无效）
 
