@@ -1,0 +1,30 @@
+SKILL.md
+  s_b68a675767e6cd::t_1eb8d3523f2590 230-247
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "5.30.7",
+  "base_commit_sha": "ccc83191c1bad87cc25eb46db832ad32ad2690be",
+  "prompts": {},
+  "humans": {
+    "h_5a953564e698df": {
+      "author": "Hearn <liuqiankun11@huawei.com>"
+    }
+  },
+  "sessions": {
+    "s_b68a675767e6cd": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "80f544c2-8357-4ef6-bd28-57d47e03114f",
+        "model": "default"
+      },
+      "human_author": "Hearn <liuqiankun11@huawei.com>",
+      "custom_attributes": {
+        "stats_model_totals": "{\"default\":{\"additions\":18,\"deletions\":1}}",
+        "stats_total_additions": "18",
+        "stats_total_deletions": "1",
+        "stats_turn_models": "{\"t_1eb8d3523f2590\":\"default\"}"
+      }
+    }
+  }
+}
