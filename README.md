@@ -28,18 +28,9 @@
 
 ## 安装 CLI
 
-### 方式 A：本机编译（推荐）
+### 方式 A：直接用预编译产物（推荐）
 
-需要 [Go](https://go.dev/dl/) 1.22+。
-
-```bash
-git clone git@github.com:QkHearn/blueship.git
-cd blueship/cli
-chmod +x build.sh
-./build.sh
-```
-
-产物在 `cli/dist/`：
+仓库已带好多平台二进制（`cli/dist/`）：
 
 | 文件 | 平台 |
 |------|------|
@@ -48,14 +39,25 @@ chmod +x build.sh
 | `blueship-windows-amd64.exe` | Windows x64 |
 | `blueship-linux-amd64` / `arm64` | Linux |
 
-把对应二进制拷到 `PATH`，或：
-
 ```bash
+git clone git@github.com:QkHearn/blueship.git
 # macOS arm64 示例
-sudo cp dist/blueship-darwin-arm64 /usr/local/bin/blueship
+chmod +x blueship/cli/dist/blueship-darwin-arm64
+sudo cp blueship/cli/dist/blueship-darwin-arm64 /usr/local/bin/blueship
+blueship version
 ```
 
-### 方式 B：Cursor Skill
+### 方式 B：本机编译
+
+需要 [Go](https://go.dev/dl/) 1.22+。
+
+```bash
+cd blueship/cli
+chmod +x build.sh
+./build.sh
+```
+
+### 方式 C：Cursor Skill
 
 将本仓库放到 Cursor 个人 skills，或软链：
 
