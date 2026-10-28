@@ -1,0 +1,7 @@
+cli/dist/blueship
+cli/dist/blueship-*
+!cli/dist/README.md
+*.exe
+.DS_Store
+.blueship.json
+.blueship-last-ship.json
