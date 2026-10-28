@@ -1,0 +1,33 @@
+cli/status.go
+  s_b68a675767e6cd::t_316dfa3d5b37df 4,7,12-26,66-89,93,97,99-102,105-110,113-114,117,125,129-131,140-186,188-204
+  s_b68a675767e6cd::t_f16b6ce47bfba3 187
+SKILL.md
+  s_b68a675767e6cd::t_f401e444bc1258 59,61,63-81
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "5.30.7",
+  "base_commit_sha": "05d10f501a565d72dcaa58cfb5afcfec44a83d5f",
+  "prompts": {},
+  "humans": {
+    "h_5a953564e698df": {
+      "author": "Hearn <liuqiankun11@huawei.com>"
+    }
+  },
+  "sessions": {
+    "s_b68a675767e6cd": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "80f544c2-8357-4ef6-bd28-57d47e03114f",
+        "model": "default"
+      },
+      "human_author": "Hearn <liuqiankun11@huawei.com>",
+      "custom_attributes": {
+        "stats_model_totals": "{\"default\":{\"additions\":151,\"deletions\":23}}",
+        "stats_total_additions": "151",
+        "stats_total_deletions": "23",
+        "stats_turn_models": "{\"t_316dfa3d5b37df\":\"default\",\"t_f16b6ce47bfba3\":\"default\",\"t_f401e444bc1258\":\"default\"}"
+      }
+    }
+  }
+}
