@@ -227,7 +227,24 @@ curl -sS -X POST "https://gitcode.com/api/v5/repos/${OWNER}/${REPO}/pulls" \
 ```
 
 - 409 且提示已有 MR → 取已有 `!N`，必要时 `PATCH` 更新 body（补模版 / Fixes）。
-- 504 后用 list/`head` 查是否已创建，避免重复。
+- **504 / Backend timeout**（见下）→ **先查再补，禁止盲目连打 POST 创建**。
+
+### GitCode 建 PR 返回 504（必读）
+
+现象：`POST .../pulls` 返回
+
+```json
+{"error_code":504,"error_message":"Backend timeout"}
+```
+
+原因：**GitCode 服务端超时**（跨 fork 建 PR 偏慢），不是 token/本地网络逻辑错误。网关已 504，但**后端往往已经建成功**。
+
+**Agent 必须按此恢复（勿把 504 当最终失败）：**
+
+1. `GET /repos/{owner}/{repo}/pulls?state=open`，按 `head.ref == 分支名` 且 fork 用户匹配（如 `hearn`）查找；或看 409 文案里的 `!N`。
+2. **已找到** → `PATCH .../pulls/{N}` 写入填好的模版 body（含 `Fixes #Issue`）与 title → 再评 `start build`。
+3. **确认没有** → 间隔数秒后再 POST **一次**；若再 504，重复步骤 1，仍无则报告用户（附 branch / issue），不要循环狂建。
+4. 向用户说明：504 = 平台超时；已用「查已有 PR + PATCH」兜底。
 
 ---
 
